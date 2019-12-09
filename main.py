@@ -10,10 +10,7 @@ token = '835465948:AAFptpBY6s9gyNACHCFSn7Q-tcOnM3V3BW4'
 
 bot = telebot.TeleBot(token)
 
-# redis_url = os.getenv('REDIS_URL', 'redis://localhost:6379')
-
-# r = redis.from_url(redis_url, db=0, decode_responses=True)
-r = StrictRedis('localhost', 6379)
+r = StrictRedis('localhost', 6379, decode_responses=True)
 
 START, ADD_NAME, ADD_LOCATION, ADD_PHOTO, CONFIRMATION = range(5)
 
@@ -57,24 +54,6 @@ def write_coords_to_redis(user_id, location):
     r.lpush(user_id, full_location_data)
 
 
-# TODO: не сделана реализация сохранения и отправки фото юзеру
-def write_photo_to_redis(message):
-    try:
-        # file_info = bot.get_file(message.photo[len(message.photo) - 1].file_id)
-        # downloaded_file = bot.download_file(file_info.file_path)
-
-        fileID = message.photo[-1].file_id
-        file = bot.get_file(fileID)
-
-        src = 'location_photos/' + file.file_path
-        with open(src, 'r') as new_file:
-            # new_file.read(file.file_id)
-            r.lpush(message.chat.id, new_file)
-
-    except Exception as e:
-        bot.reply_to(message, e)
-
-
 def delete_location(user_id):
     r.lpop(user_id)
 
@@ -109,14 +88,7 @@ def handle_location(message):
 @bot.message_handler(func=lambda message: get_state(message) == ADD_LOCATION, content_types=['location'])
 def handle_confirmation(message):
     write_coords_to_redis(message.chat.id, message.location)
-    bot.send_message(message.chat.id, 'Дополни фотографией')
-    update_state(message, ADD_PHOTO)
-
-
-@bot.message_handler(func=lambda message: get_state(message) == ADD_PHOTO, content_types=['photo'])
-def handle_docs_photo(message):
-    write_photo_to_redis(message)
-    bot.reply_to(message, 'Добавить запись?', reply_markup=keyboard_answer)
+    bot.send_message(message.chat.id, 'Добавить запись?', reply_markup=keyboard_answer)
     update_state(message, CONFIRMATION)
 
 
@@ -142,8 +114,6 @@ def handle_finish(message):
             delete_location(message.chat.id)
 
 
-# TODO: Исправить неверный вывод. Присылает только file_id одной из фотографии
-
 @bot.message_handler(func=lambda x: True, commands=['list'])
 def handle_list(message):
     if get_state(message) != START:
@@ -156,11 +126,10 @@ def handle_list(message):
         else:
             bot.send_message(message.chat.id, 'Последние локации:')
             for location in last_locations:
-                if b';' in location:
-                    title, lat, lon = location.split(b';')
+                if ';' in location:
+                    title, lat, lon = location.split(';')
                     bot.send_message(message.chat.id, str(title))
                     bot.send_location(message.chat.id, lat, lon)
-                    # bot.send_photo(message.chat.id, photo)
                 else:
                     bot.send_message(message.chat.id, location)
 
