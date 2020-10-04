@@ -1,9 +1,7 @@
 import telebot
 from telebot import types
 from collections import defaultdict
-import redis
-import os
-
+import django_heroku
 from redis import StrictRedis
 
 token = '835465948:AAFptpBY6s9gyNACHCFSn7Q-tcOnM3V3BW4'
@@ -12,7 +10,7 @@ bot = telebot.TeleBot(token)
 
 r = StrictRedis('localhost', 6379, decode_responses=True)
 
-START, ADD_NAME, ADD_LOCATION, ADD_PHOTO, CONFIRMATION = range(5)
+START, ADD_NAME, ADD_LOCATION, CONFIRMATION = range(4)
 
 keyboard_answer = types.ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True, row_width=2)
 btn_yes = types.KeyboardButton('Да')

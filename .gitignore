@@ -1,4 +1,7 @@
-.git
-.idea
 /location_photos/
+.idea
 dump.rdb
+!.gitignore
+__pycache__
+.*
+db.sqlite3
